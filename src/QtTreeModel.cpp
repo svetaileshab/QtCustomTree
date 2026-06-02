@@ -215,54 +215,55 @@ QString QtTreeModel::getMaxStatus(int nodeIndex) const
     return maxStatus;
 }
 
+
 QVariant QtTreeModel::data(const QModelIndex &idx, int role) const
 {
     if (!idx.isValid()) return {};
     int i = idx.internalId();
     if (i < 0 || i >= m_nodes.size()) return {};
     const auto &n = m_nodes[i];
-    
+
     if (role == Qt::BackgroundRole) {
         if (n.type == ItemNode && m_highlightedIds.contains(n.id)) {
             return QColor("#3b82f6");
         }
         return QVariant();
     }
-    
+
     if (role == Qt::ForegroundRole) {
         if (n.type == ItemNode) {
             if (m_highlightedIds.contains(n.id))
                 return QColor("#ffffff");
             if (n.data) {
                 const QString &s = n.data->status();
-                if (s == "alarm")    return QColor("#ef4444");
-                if (s == "warning")  return QColor("#f59e0b");
-                if (s == "fault")    return QColor("#f97316");
-                if (s == "disabled") return QColor("#6b7280");
+                if (s == "alarm" || s == "locked" || s == "busy" || s == "closed") return QColor("#ef4444");
+                if (s == "warning" || s == "modified" || s == "away" || s == "low traffic") return QColor("#f59e0b");
+                if (s == "fault" || s == "corrupted" || s == "offline" || s == "restoration") return QColor("#f97316");
+                if (s == "disabled" || s == "hidden" || s == "terminated" || s == "abandoned") return QColor("#6b7280");
                 return QColor("#10b981");
             }
         }
         if (n.type == GroupNode) {
             QString maxStatus = getMaxStatus(i);
-            if (maxStatus == "alarm")    return QColor("#ef4444");
-            if (maxStatus == "warning")  return QColor("#f59e0b");
-            if (maxStatus == "fault")    return QColor("#f97316");
-            if (maxStatus == "disabled") return QColor("#6b7280");
+            if (maxStatus == "alarm" || maxStatus == "locked" || maxStatus == "busy" || maxStatus == "closed") return QColor("#ef4444");
+            if (maxStatus == "warning" || maxStatus == "modified" || maxStatus == "away" || maxStatus == "low traffic") return QColor("#f59e0b");
+            if (maxStatus == "fault" || maxStatus == "corrupted" || maxStatus == "offline" || maxStatus == "restoration") return QColor("#f97316");
+            if (maxStatus == "disabled" || maxStatus == "hidden" || maxStatus == "terminated" || maxStatus == "abandoned") return QColor("#6b7280");
             return QColor("#ffffff");
         }
     }
-    
+
     if (role == Qt::DisplayRole) {
         return n.name;
     }
-    
+
     if (role == Qt::DecorationRole) {
         if (n.type == ItemNode && n.data && n.data->isOnPlan()) {
-            return QIcon(":/images/location.png");
+            return QIcon(":/icons/location");
         }
         return QVariant();
     }
-    
+
     if (role == Qt::FontRole) {
         if (n.type == GroupNode) {
             QFont font;
@@ -275,14 +276,14 @@ QVariant QtTreeModel::data(const QModelIndex &idx, int role) const
             return font;
         }
     }
-    
+
     if (role == Qt::ToolTipRole) {
         if (n.data) {
             return n.data->tooltip().isEmpty() ? n.name : n.data->tooltip();
         }
         return n.name;
     }
-    
+
     if (role == Qt::UserRole + 1) {
         if (n.type == ItemNode) {
             return n.id;
@@ -292,6 +293,7 @@ QVariant QtTreeModel::data(const QModelIndex &idx, int role) const
 
     return {};
 }
+
 
 void QtTreeModel::setHighlightedIds(const QSet<QString> &ids)
 {

@@ -19,8 +19,9 @@ public:
         QString info = QString("ID: %1\nName: %2\nStatus: %3").arg(m_id, m_name, m_status);
         if (m_status == "online") info += "\n🟢 Available";
         else if (m_status == "away") info += "\n🟡 Away";
-        else if (m_status == "offline") info += "\n🔴 Offline";
-        else if (m_status == "busy") info += "\n🟠 Do Not Disturb";
+        else if (m_status == "busy") info += "\n🔴 Do Not Disturb";
+        else if (m_status == "offline") info += "\n⚫ Offline";
+        else if (m_status == "terminated") info += "\n👻 Terminated";
         return info;
     }
 
@@ -39,20 +40,9 @@ public:
         createDepartment("dept_hr", "Human Resources");
     }
 
-    QList<QString> getRootNodes() const override
-    {
-        return {"dept_eng", "dept_sales", "dept_hr"};
-    }
-
-    QList<QString> getChildren(const QString &nodeId) const override
-    {
-        return m_children.value(nodeId);
-    }
-
-    std::shared_ptr<ITreeNodeData> getItemData(const QString &nodeId) const override
-    {
-        return m_data.value(nodeId);
-    }
+    QList<QString> getRootNodes() const override { return {"dept_eng", "dept_sales", "dept_hr"}; }
+    QList<QString> getChildren(const QString &nodeId) const override { return m_children.value(nodeId); }
+    std::shared_ptr<ITreeNodeData> getItemData(const QString &nodeId) const override { return m_data.value(nodeId); }
 
 private:
     QMap<QString, std::shared_ptr<ITreeNodeData>> m_data;
@@ -66,7 +56,7 @@ private:
         teams["Frontend Team"] = QStringList() << "Alice Johnson" << "Bob Smith" << "Charlie Brown" << "Diana Ross" << "Eve Wilson";
         teams["Backend Team"] = QStringList() << "Frank Miller" << "Grace Lee" << "Henry Davis" << "Ivy Chen" << "Jack White";
         teams["QA Team"] = QStringList() << "Kate Taylor" << "Leo Martinez" << "Mia Anderson";
-        
+
         if (id == "dept_sales") {
             teams.clear();
             teams["Enterprise"] = QStringList() << "Nathan Scott" << "Olivia Green" << "Peter Black";
@@ -79,12 +69,11 @@ private:
         }
 
         QStringList teamList;
-        QStringList statuses = QStringList() << "online" << "away" << "offline" << "busy";
-        
+        QStringList statuses = QStringList() << "online" << "away" << "busy" << "offline" << "terminated";
+
         for (auto it = teams.begin(); it != teams.end(); ++it) {
             QString teamId = QString("%1/%2").arg(id).arg(it.key());
             m_data[teamId] = std::make_shared<FakeOrgNodeData>(teamId, "👥 " + it.key());
-            
             QStringList members;
             for (const QString &person : it.value()) {
                 QString personId = QString("%1/%2").arg(teamId).arg(person);
