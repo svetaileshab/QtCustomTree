@@ -1,0 +1,4 @@
+build/
+*.user
+*.autogen
+mocs_compilation.cpp
