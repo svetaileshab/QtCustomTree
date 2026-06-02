@@ -19,12 +19,14 @@ add_library(QtCustomTree STATIC
     include/QtCustomTree/QtTreeStatusManager.h
     include/QtCustomTree/QtTreeContextMenu.h
     include/QtCustomTree/QtCustomTree.h
+    include/QtCustomTree/QtTreeDelegate.h
     src/QtTreeModel.cpp
     src/QtTreeSelection.cpp
     src/QtTreeDragHandler.cpp
     src/QtTreeStatusManager.cpp
     src/QtTreeContextMenu.cpp
     src/QtCustomTree.cpp
+    src/QtTreeDelegate.cpp
 )
 target_include_directories(QtCustomTree PUBLIC include)
 target_link_libraries(QtCustomTree PUBLIC QtCustomTreeInterfaces Qt5::Widgets)

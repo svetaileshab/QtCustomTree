@@ -2,8 +2,6 @@
 #include <QPainter>
 #include <QStyleOptionViewItem>
 #include <QAbstractItemModel>
-#include <QMouseEvent>
-#include <QTreeView>
 
 QtTreeDelegate::QtTreeDelegate(QObject *parent)
     : QStyledItemDelegate(parent) {}
@@ -14,113 +12,49 @@ void QtTreeDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option
     QStyleOptionViewItem opt = option;
     initStyleOption(&opt, index);
 
-    bool hasChildren = index.model()->hasChildren(index);
-
-    // Рисуем фон
-    if (opt.state & QStyle::State_Selected) {
-        painter->fillRect(opt.rect, QColor("#3b82f6"));
-    } else if (opt.features & QStyleOptionViewItem::Alternate) {
+    // Рисуем фон (включая alternate colors)
+    if (opt.features & QStyleOptionViewItem::Alternate) {
         painter->fillRect(opt.rect, QColor("#1e293b"));
     } else {
         painter->fillRect(opt.rect, QColor("#0f172a"));
     }
 
-    // Рисуем стрелку для узлов с детьми
-    if (hasChildren) {
-        QRect arrowRect = opt.rect;
-        arrowRect.setWidth(20);
-        
-        painter->save();
-        painter->setRenderHint(QPainter::Antialiasing);
-        
-        QPen pen(QColor("#94a3b8"), 2);
-        painter->setPen(pen);
-        painter->setBrush(Qt::NoBrush);
-        
-        int cx = arrowRect.center().x();
-        int cy = arrowRect.center().y();
-        int sz = 4;
-        
-        if (opt.state & QStyle::State_Open) {
-            // Стрелка вниз ▼
-            QPolygon arrow;
-            arrow << QPoint(cx - sz, cy - sz/2)
-                  << QPoint(cx, cy + sz/2)
-                  << QPoint(cx + sz, cy - sz/2);
-            painter->drawPolyline(arrow);
-        } else {
-            // Стрелка вправо ▶
-            QPolygon arrow;
-            arrow << QPoint(cx - sz/2, cy - sz)
-                  << QPoint(cx + sz/2, cy)
-                  << QPoint(cx - sz/2, cy + sz);
-            painter->drawPolyline(arrow);
-        }
-        
-        painter->restore();
+    // Фон выделения (из модели)
+    QVariant bgColor = index.data(Qt::BackgroundRole);
+    if (bgColor.isValid()) {
+        painter->fillRect(opt.rect, bgColor.value<QColor>());
     }
 
-    // Рисуем текст
-    QRect textRect = opt.rect;
-    if (hasChildren) {
-        textRect.setLeft(textRect.left() + 20);
-    }
-    textRect.adjust(4, 0, -4, 0);
-
+    // Рисуем только текст (без стандартного display)
+    QRect textRect = opt.rect.adjusted(8, 0, -8, 0);
+    
     painter->save();
-    if (opt.state & QStyle::State_Selected) {
-        painter->setPen(QColor("#ffffff"));
+    
+    // Цвет текста
+    QVariant fgColor = index.data(Qt::ForegroundRole);
+    if (fgColor.isValid()) {
+        painter->setPen(fgColor.value<QColor>());
     } else {
-        QVariant fgColor = index.data(Qt::ForegroundRole);
-        if (fgColor.isValid()) {
-            painter->setPen(fgColor.value<QColor>());
-        } else {
-            painter->setPen(QColor("#f1f5f9"));
-        }
+        painter->setPen(QColor("#f1f5f9"));
     }
     
+    // Шрифт
     QFont font = opt.font;
+    QVariant fontData = index.data(Qt::FontRole);
+    if (fontData.isValid()) {
+        font = fontData.value<QFont>();
+    }
     painter->setFont(font);
+    
+    // Иконка (DecorationRole)
+    QVariant iconData = index.data(Qt::DecorationRole);
+    if (iconData.isValid() && iconData.type() == QVariant::Icon) {
+        QIcon icon = iconData.value<QIcon>();
+        QRect iconRect(textRect.x(), textRect.y() + (textRect.height() - 16) / 2, 16, 16);
+        icon.paint(painter, iconRect);
+        textRect.setX(textRect.x() + 20);
+    }
+    
     painter->drawText(textRect, Qt::AlignVCenter | Qt::AlignLeft, opt.text);
     painter->restore();
-}
-
-QSize QtTreeDelegate::sizeHint(const QStyleOptionViewItem &option,
-                               const QModelIndex &index) const
-{
-    QSize sz = QStyledItemDelegate::sizeHint(option, index);
-    sz.setHeight(sz.height() + 8);
-    return sz;
-}
-
-
-bool QtTreeDelegate::editorEvent(QEvent *event, QAbstractItemModel *model,
-                                 const QStyleOptionViewItem &option,
-                                 const QModelIndex &index)
-{
-    if (event->type() == QEvent::MouseButtonPress) {
-        QMouseEvent *me = static_cast<QMouseEvent*>(event);
-
-        // Ширина стрелки = 20px, но с учётом отступа (indentation)
-        int arrowWidth = 20;
-        int level = 0;
-        QModelIndex parent = index.parent();
-        while (parent.isValid()) {
-            level++;
-            parent = parent.parent();
-        }
-        int arrowX = level * 20;  // 20 — стандартный indentation в Qt
-
-        // Проверяем, кликнули ли по стрелке
-        if (me->pos().x() >= arrowX && me->pos().x() <= arrowX + arrowWidth
-            && model->hasChildren(index)) {
-            QTreeView *tree = qobject_cast<QTreeView*>(this->parent());
-            if (tree) {
-                tree->setExpanded(index, !tree->isExpanded(index));
-            }
-            return true;
-        }
-    }
-
-    return QStyledItemDelegate::editorEvent(event, model, option, index);
 }
