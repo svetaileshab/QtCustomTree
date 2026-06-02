@@ -12,6 +12,8 @@
 #include <QMouseEvent>
 #include <QKeyEvent>
 #include <QTimer>
+#include <QPainter>
+#include <QStyleOption>
 
 QtCustomTree::QtCustomTree(QWidget *parent)
     : QWidget(parent)
@@ -48,16 +50,35 @@ void QtCustomTree::setupUi()
     m_treeView->setDragDropMode(QAbstractItemView::DragOnly);
     m_treeView->setContextMenuPolicy(Qt::CustomContextMenu);
     m_treeView->setAnimated(true);
+    m_treeView->setIndentation(20);
     m_treeView->setStyleSheet(
         "QTreeView {"
         "  background: #0f172a;"
         "  alternate-background-color: #1e293b;"
         "  selection-background-color: #3b82f6;"
         "  color: #f1f5f9;"
+        "  outline: none;"
         "}"
-        "QTreeView::item:selected { background: #3b82f6; color: #ffffff; }"
-        "QTreeView::branch { background: transparent; }"
-    );
+        "QTreeView::item {"
+        "  padding: 4px 8px;"
+        "  border: none;"
+        "}"
+        "QTreeView::item:selected {"
+        "  background: #3b82f6;"
+        "  color: #ffffff;"
+        "}"
+        "QTreeView::branch {"
+        "  background: transparent;"
+        "}"
+        "QTreeView::branch:has-children:!has-siblings:closed,"
+        "QTreeView::branch:closed:has-children:has-siblings {"
+        "  image: url(:/icons/arrow-right);"
+        "}"
+        "QTreeView::branch:open:has-children:!has-siblings,"
+        "QTreeView::branch:open:has-children:has-siblings {"
+        "  image: url(:/icons/arrow-down);"
+        "}"
+        );
 
     layout->addWidget(m_treeView);
 }
@@ -137,12 +158,13 @@ bool QtCustomTree::isItemIndex(const QModelIndex &idx) const
     return !m_model->data(idx, Qt::UserRole + 1).toString().isEmpty();
 }
 
+
 bool QtCustomTree::eventFilter(QObject *obj, QEvent *event)
 {
     if (obj == m_treeView->viewport() && event->type() == QEvent::MouseButtonPress) {
         QMouseEvent *me = static_cast<QMouseEvent*>(event);
         QModelIndex idx = m_treeView->indexAt(me->pos());
-        
+
         if (me->button() == Qt::LeftButton) {
             if (me->modifiers() & Qt::ShiftModifier) {
                 m_selection->handleShiftClick(idx);
@@ -151,10 +173,12 @@ bool QtCustomTree::eventFilter(QObject *obj, QEvent *event)
                 m_dragHandler->prepareDrag(me);
                 return false;
             } else {
-                m_selection->handleSingleClick(idx);
+                // Для групп — позволяем Qt раскрыть/свернуть
                 if (m_model->hasChildren(idx)) {
-                    return false; // Позволяем раскрыть узел
+                    return false;
                 }
+                // Для элементов — обрабатываем выделение
+                m_selection->handleSingleClick(idx);
                 return true;
             }
         }
@@ -177,6 +201,6 @@ bool QtCustomTree::eventFilter(QObject *obj, QEvent *event)
             return true;
         }
     }
-    
+
     return QWidget::eventFilter(obj, event);
 }

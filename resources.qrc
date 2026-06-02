@@ -1,0 +1,7 @@
+<RCC>
+    <qresource prefix="/icons">
+        <file alias="arrow-right">resources/tree-closed.svg</file>
+        <file alias="arrow-down">resources/tree-open.svg</file>
+        <file alias="location">resources/location.png</file>
+    </qresource>
+</RCC>
