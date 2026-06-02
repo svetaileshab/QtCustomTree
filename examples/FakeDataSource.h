@@ -5,6 +5,7 @@
 #include <QMap>
 #include <QRandomGenerator>
 
+// Тестовые данные для демонстрации
 class FakeNodeData : public ITreeNodeData
 {
 public:
@@ -31,14 +32,14 @@ class FakeDataSource : public ITreeDataSource
 public:
     FakeDataSource()
     {
-        createBuilding("building1", "🏢 Main Building");
-        createBuilding("building2", "🏭 Production Workshop");
-        createBuilding("building3", "🏬 Warehouse");
+        // Создаём тестовую иерархию
+        createBuilding("building1", "🏢 Главное здание");
+        createBuilding("building2", "🏭 Производственный цех");
     }
 
     QList<QString> getRootNodes() const override
     {
-        return {"building1", "building2", "building3"};
+        return {"building1", "building2"};
     }
 
     QList<QString> getChildren(const QString &nodeId) const override
@@ -59,35 +60,24 @@ private:
     {
         m_data[id] = std::make_shared<FakeNodeData>(id, name);
 
+        // Этажи
         QStringList floors;
-        for (int f = 1; f <= 4; ++f) {
+        for (int f = 1; f <= 3; ++f) {
             QString floorId = QString("%1_floor%2").arg(id).arg(f);
-            m_data[floorId] = std::make_shared<FakeNodeData>(
-                floorId, 
-                QString("📁 Floor %1").arg(f)
-            );
+            m_data[floorId] = std::make_shared<FakeNodeData>(floorId, QString("📁 Этаж %1").arg(f));
             
             QStringList devices;
-            QStringList types = {
-                "🔥 Smoke Detector", 
-                "🌡️ Temperature Sensor",
-                "🔊 Sounder", 
-                "💧 Water Leak Sensor",
-                "🚪 Door Contact",
-                "📹 Camera",
-                "🔔 Alarm Bell",
-                "🌫️ CO2 Sensor"
-            };
-            QStringList statuses = {"normal", "warning", "alarm", "fault", "disabled"};
+            QStringList types = {"🔥 Датчик дыма", "🌡️ Датчик температуры", "🔊 Оповещатель"};
+            QStringList statuses = {"normal", "warning", "alarm", "disabled"};
             
-            for (int d = 1; d <= 12; ++d) {
+            for (int d = 1; d <= 4; ++d) {
                 QString devId = QString("%1_dev%2").arg(floorId).arg(d);
                 QString status = statuses[QRandomGenerator::global()->bounded(statuses.size())];
                 bool onPlan = QRandomGenerator::global()->bounded(2) == 1;
                 
                 m_data[devId] = std::make_shared<FakeNodeData>(
                     devId,
-                    QString("%1 #%2").arg(types[d % types.size()]).arg(d),
+                    QString("%1 %2").arg(types[d % types.size()]).arg(d),
                     status,
                     onPlan
                 );

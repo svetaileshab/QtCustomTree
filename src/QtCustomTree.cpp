@@ -4,8 +4,8 @@
 #include "QtCustomTree/QtTreeDragHandler.h"
 #include "QtCustomTree/QtTreeStatusManager.h"
 #include "QtCustomTree/QtTreeContextMenu.h"
-#include "QtCustomTree/QtTreeDelegate.h"
 #include "ITreeDataSource.h"
+#include "ITreeNodeData.h"
 
 #include <QVBoxLayout>
 #include <QHeaderView>
@@ -14,8 +14,6 @@
 #include <QTimer>
 #include <QPainter>
 #include <QStyleOption>
-#include <QToolTip>
-
 
 QtCustomTree::QtCustomTree(QWidget *parent)
     : QWidget(parent)
@@ -26,7 +24,7 @@ QtCustomTree::QtCustomTree(QWidget *parent)
     m_treeView->setModel(m_model);
     
     m_selection = new QtTreeSelection(m_treeView, m_model, this);
-    m_selection->setMaxSelection(5);
+    m_selection->setMaxSelection(100);
     
     m_dragHandler = new QtTreeDragHandler(m_treeView, m_model, this);
     m_statusManager = new QtTreeStatusManager(m_treeView, m_model, this);
@@ -51,13 +49,13 @@ void QtCustomTree::setupUi()
     m_treeView->setDragEnabled(true);
     m_treeView->setDragDropMode(QAbstractItemView::DragOnly);
     m_treeView->setContextMenuPolicy(Qt::CustomContextMenu);
-    m_treeView->setItemDelegate(new QtTreeDelegate(this));
     m_treeView->setAnimated(true);
     m_treeView->setIndentation(20);
     m_treeView->setStyleSheet(
         "QTreeView {"
         "  background: #0f172a;"
         "  alternate-background-color: #1e293b;"
+        "  selection-background-color: #3b82f6;"
         "  color: #f1f5f9;"
         "  outline: none;"
         "}"
@@ -112,11 +110,7 @@ void QtCustomTree::setupConnections()
         m_dragHandler->setSelectedIds(ids);
         emit selectionChanged();
     });
-
-    connect(m_selection, &QtTreeSelection::limitReached, this, [this]() {
-        QToolTip::showText(QCursor::pos(), "Max 5 items selected", m_treeView);
-    });
-
+    
     m_treeView->viewport()->installEventFilter(this);
     m_treeView->installEventFilter(this);
 }

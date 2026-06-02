@@ -110,7 +110,7 @@ int main(int argc, char *argv[])
             }
             tree->rebuild();
         });
-    
+
     window.setCentralWidget(central);
     window.setStyleSheet("QMainWindow { background: #0f172a; }");
     window.show();
