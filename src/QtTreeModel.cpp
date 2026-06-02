@@ -283,6 +283,13 @@ QVariant QtTreeModel::data(const QModelIndex &idx, int role) const
         return n.name;
     }
     
+    if (role == Qt::UserRole + 1) {
+        if (n.type == ItemNode) {
+            return n.id;
+        }
+        return QString();
+    }
+
     return {};
 }
 
